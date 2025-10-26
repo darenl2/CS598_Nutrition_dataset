@@ -1,6 +1,5 @@
 # CS598 Nutrition Dataset Processing
-
-A Python pipeline for processing and enriching recipe datasets with metadata including time standardization, category classification, dietary labels, difficulty scoring, and cuisine type detection.
+This repository includes the python scripts for processing, input data, and output data
 
 ## Project Structure
 
