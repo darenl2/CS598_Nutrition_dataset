@@ -43,7 +43,5 @@ def categorize_dietary_labels(csv_path: str):
 
     df["dietary_restrictions"] = df.apply(combine_restrictions, axis=1)
 
-    # Clean up temporary columns if you don’t need them
-    df.drop(columns=["combined_text"] + dietary_cols, inplace=True)
-
-    return df
+    # Return only the dietary_restrictions column to avoid duplicating all other columns
+    return df[["dietary_restrictions"]]

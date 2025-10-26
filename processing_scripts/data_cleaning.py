@@ -68,22 +68,17 @@ def standardize_time_columns_df(input_csv, prep_col="prep_time", cook_col="cook_
 
         return int(round(h * 60 + m))
 
-    df["prep_time_minutes"] = (
-        df[prep_col].apply(parse_time_to_minutes) if prep_col in df.columns else 0
-    )
-    df["cook_time_minutes"] = (
-        df[cook_col].apply(parse_time_to_minutes) if cook_col in df.columns else 0
-    )
+    if prep_col in df.columns:
+        df[prep_col] = df[prep_col].apply(parse_time_to_minutes).astype(int)
+    
+    if cook_col in df.columns:
+        df[cook_col] = df[cook_col].apply(parse_time_to_minutes).astype(int)
 
     if total_col in df.columns:
-        df["total_time_minutes"] = df[total_col].apply(parse_time_to_minutes)
+        df[total_col] = df[total_col].apply(parse_time_to_minutes).astype(int)
     else:
-        df["total_time_minutes"] = (
-            df["prep_time_minutes"] + df["cook_time_minutes"]
-        )
-
-    df["prep_time_minutes"] = df["prep_time_minutes"].astype(int)
-    df["cook_time_minutes"] = df["cook_time_minutes"].astype(int)
-    df["total_time_minutes"] = df["total_time_minutes"].astype(int)
+        prep_vals = df[prep_col].apply(parse_time_to_minutes) if prep_col in df.columns else 0
+        cook_vals = df[cook_col].apply(parse_time_to_minutes) if cook_col in df.columns else 0
+        df[total_col] = (prep_vals + cook_vals).astype(int)
 
     return df

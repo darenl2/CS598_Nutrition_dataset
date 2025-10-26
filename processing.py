@@ -1,23 +1,13 @@
-
-
-
-
-#!/usr/bin/env python3
-# build_cleaned_dataset.py
-# Usage:
-#   python build_cleaned_dataset.py archive-2/test_recipes.csv archive-2/recipes.cleaned.csv
-
 import sys
 import re
 import ast
 import pandas as pd
 
-# import your existing scripts as modules
 from processing_scripts import cuisines as cuisines_mod
 from processing_scripts import dietary_labels as dietary_mod
-from processing_scripts import difficulty as difficulty_mod  # even if it's a CLI, we'll wrap logic here
+from processing_scripts import difficulty as difficulty_mod
+from processing_scripts import data_cleaning as data_cleaning_mod  
 
-# ---------- helpers that adapt your existing modules to DataFrame-in/DataFrame-out ----------
 
 def add_course_from_cuisine_path(df: pd.DataFrame, path_col: str = "cuisine_path") -> pd.DataFrame:
     """Derive top_level_cuisine and a simple course label using cuisines.py utilities."""
@@ -67,7 +57,7 @@ def add_difficulty_simple(df: pd.DataFrame) -> pd.DataFrame:
     We don't call a CLI; we inline the same logic so the orchestrator stays file-in/file-out.
     """
     # detect columns
-    time_col = next((c for c in df.columns if c.lower() == "total_time"), None)
+    time_col = next((c for c in df.columns if c.lower() in ["total_time", "total time"]), None)
     dir_col = next((c for c in df.columns if any(k in c.lower() for k in ["direction","instruction","step"])), None)
 
     def count_steps(val):
@@ -116,13 +106,25 @@ def main():
         sys.exit(1)
 
     in_csv, out_csv = sys.argv[1], sys.argv[2]
-    df = pd.read_csv(in_csv)
+    
+    # Apply data cleaning: standardize time columns (replaces original columns)
+    # Check what column names exist and map appropriately
+    temp_df = pd.read_csv(in_csv, nrows=1)
+    
+    # Map based on what columns exist
+    prep_col = "prep_time" if "prep_time" in temp_df.columns else ("Prep Time" if "Prep Time" in temp_df.columns else None)
+    cook_col = "cook_time" if "cook_time" in temp_df.columns else ("Cook Time" if "Cook Time" in temp_df.columns else None)
+    total_col = "total_time" if "total_time" in temp_df.columns else ("Total Time" if "Total Time" in temp_df.columns else None)
+    
+    df = data_cleaning_mod.standardize_time_columns_df(in_csv, prep_col=prep_col, cook_col=cook_col, total_col=total_col)
 
+    # Continue with other transformations
     df = add_course_from_cuisine_path(df)
     df = add_dietary_flags(df, in_csv)
     df = add_difficulty_simple(df)
 
-    df.to_csv(out_csv, index=False)
+    # Write to CSV, overwriting any existing file
+    df.to_csv(out_csv, index=False, mode='w')
     print(f"✅ cleaned dataset written: {out_csv}")
 
 if __name__ == "__main__":
