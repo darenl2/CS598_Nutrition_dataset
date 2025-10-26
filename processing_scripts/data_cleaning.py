@@ -27,7 +27,6 @@ def fill_missing_times_with_zero_df(input_csv, prep_col="prep_time", cook_col="c
     df[cook_col] = df[cook_col].apply(clean_value)
     df[total_col] = df[total_col].apply(clean_value)
 
-    # Ensure integer dtype
     df[prep_col] = df[prep_col].astype(int)
     df[cook_col] = df[cook_col].astype(int)
     df[total_col] = df[total_col].astype(int)

@@ -3,15 +3,15 @@ import re
 import ast
 import pandas as pd
 
-from processing_scripts import cuisines as cuisines_mod
+from processing_scripts import category as categories_mod
 from processing_scripts import dietary_labels as dietary_mod
 from processing_scripts import difficulty as difficulty_mod
-from processing_scripts import data_cleaning as data_cleaning_mod  
+from processing_scripts import data_cleaning as data_cleaning_mod
+from processing_scripts import cuisine_type as cuisine_type_mod  
 
 
 def add_course_from_cuisine_path(df: pd.DataFrame, path_col: str = "cuisine_path") -> pd.DataFrame:
     """Derive top_level_cuisine and a simple course label using cuisines.py utilities."""
-    # find cuisine_path-like column
     col = path_col if path_col in df.columns else next((c for c in df.columns if "cuisine" in c.lower()), None)
 
     def top_level(x: str):
@@ -24,9 +24,8 @@ def add_course_from_cuisine_path(df: pd.DataFrame, path_col: str = "cuisine_path
     df = df.copy()
     df["top_level_cuisine"] = df[col].astype(str).apply(top_level) if col else None
 
-    # use your cuisines.py categorize_cuisines() to map top-levels into buckets, then to canonical course
     uniques = sorted(set([t for t in df["top_level_cuisine"].dropna().tolist()]))
-    buckets = cuisines_mod.categorize_cuisines(uniques)  # {"Appetizers":[...], "Main Dish":[...], "Dessert":[...]}
+    buckets = categories_mod.categorize_cuisines(uniques)
 
     rev = {}
     for bucket, items in buckets.items():
@@ -56,7 +55,6 @@ def add_difficulty_simple(df: pd.DataFrame) -> pd.DataFrame:
       buckets: <200 easy, <600 medium, else hard
     We don't call a CLI; we inline the same logic so the orchestrator stays file-in/file-out.
     """
-    # detect columns
     time_col = next((c for c in df.columns if c.lower() in ["total_time", "total time"]), None)
     dir_col = next((c for c in df.columns if any(k in c.lower() for k in ["direction","instruction","step"])), None)
 
@@ -89,13 +87,18 @@ def add_difficulty_simple(df: pd.DataFrame) -> pd.DataFrame:
     df["difficulty_score"] = score
 
     def bucket(s):
-        if s < 200:
+        if s == 0:
+            return "N/A"
+        elif s < 200:
             return "easy"
         elif s < 600:
             return "medium"
         return "hard"
 
-    df["difficulty"] = df["difficulty_score"].apply(bucket) if isinstance(score, pd.Series) else "easy"
+    if time_col is None:
+        df["difficulty"] = "N/A"
+    else:
+        df["difficulty"] = df["difficulty_score"].apply(bucket) if isinstance(score, pd.Series) else "N/A"
     return df
 
 # ---------- main ----------
@@ -107,23 +110,24 @@ def main():
 
     in_csv, out_csv = sys.argv[1], sys.argv[2]
     
-    # Apply data cleaning: standardize time columns (replaces original columns)
-    # Check what column names exist and map appropriately
     temp_df = pd.read_csv(in_csv, nrows=1)
     
-    # Map based on what columns exist
     prep_col = "prep_time" if "prep_time" in temp_df.columns else ("Prep Time" if "Prep Time" in temp_df.columns else None)
     cook_col = "cook_time" if "cook_time" in temp_df.columns else ("Cook Time" if "Cook Time" in temp_df.columns else None)
     total_col = "total_time" if "total_time" in temp_df.columns else ("Total Time" if "Total Time" in temp_df.columns else None)
     
     df = data_cleaning_mod.standardize_time_columns_df(in_csv, prep_col=prep_col, cook_col=cook_col, total_col=total_col)
 
-    # Continue with other transformations
     df = add_course_from_cuisine_path(df)
+    df = cuisine_type_mod.add_cuisine_type(df)
     df = add_dietary_flags(df, in_csv)
     df = add_difficulty_simple(df)
+    
+    # Check if total_time column exists - if not, set both difficulty and cuisine_type to "N/A"
+    if total_col is None:
+        df["difficulty"] = "N/A"
+        df["cuisine_type"] = "N/A"
 
-    # Write to CSV, overwriting any existing file
     df.to_csv(out_csv, index=False, mode='w')
     print(f"✅ cleaned dataset written: {out_csv}")
 

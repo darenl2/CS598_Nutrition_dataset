@@ -8,15 +8,12 @@ def categorize_dietary_labels(csv_path: str):
     df = pd.read_csv(csv_path)
     df.columns = df.columns.str.lower()
 
-    # Identify useful columns
     text_cols = [c for c in df.columns if any(k in c for k in ["ingredient", "title", "cuisine"])]
     if not text_cols:
         raise ValueError("No ingredient/title/cuisine column found for dietary inference.")
 
-    # Combine text fields for keyword searching
     df["combined_text"] = df[text_cols].astype(str).agg(" ".join, axis=1).str.lower()
 
-    # Define keyword sets
     meat_keywords = ["chicken", "beef", "pork", "bacon", "lamb", "turkey", "duck"]
     seafood_keywords = ["fish", "salmon", "shrimp", "tuna", "crab", "lobster"]
     dairy_keywords = ["milk", "cheese", "butter", "cream", "yogurt"]
@@ -26,7 +23,6 @@ def categorize_dietary_labels(csv_path: str):
     def has_any(text, keywords):
         return any(k in text for k in keywords)
 
-    # Compute flags
     df["Vegetarian"]  = ~df["combined_text"].apply(lambda x: has_any(x, meat_keywords))
     df["Vegan"]       = ~df["combined_text"].apply(lambda x: has_any(x, meat_keywords + dairy_keywords + egg_keywords))
     df["Pescatarian"] =  df["combined_text"].apply(lambda x: (has_any(x, seafood_keywords) and not has_any(x, meat_keywords)))
@@ -34,7 +30,6 @@ def categorize_dietary_labels(csv_path: str):
     df["Nut_Free"]    = ~df["combined_text"].apply(lambda x: has_any(x, nut_keywords))
     df["Egg_Free"]    = ~df["combined_text"].apply(lambda x: has_any(x, egg_keywords))
 
-    # Combine all True flags into a comma-separated string
     dietary_cols = ["Vegetarian", "Vegan", "Pescatarian", "Dairy_Free", "Nut_Free", "Egg_Free"]
 
     def combine_restrictions(row):
@@ -43,5 +38,4 @@ def categorize_dietary_labels(csv_path: str):
 
     df["dietary_restrictions"] = df.apply(combine_restrictions, axis=1)
 
-    # Return only the dietary_restrictions column to avoid duplicating all other columns
     return df[["dietary_restrictions"]]
