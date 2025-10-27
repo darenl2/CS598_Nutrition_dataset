@@ -6,9 +6,6 @@ import numpy as np
 
 
 def fill_missing_times_with_zero_df(input_csv, prep_col="prep_time", cook_col="cook_time", total_col="total_time"):
-    """
-    input_csv: path to CSV file
-    """
     df = pd.read_csv(input_csv)
 
     for col in [prep_col, cook_col, total_col]:
@@ -35,9 +32,6 @@ def fill_missing_times_with_zero_df(input_csv, prep_col="prep_time", cook_col="c
 
 
 def standardize_time_columns_df(input_csv, prep_col="prep_time", cook_col="cook_time", total_col="total_time"):
-    """
-    input_csv: Path to the CSV file.
-    """
     df = pd.read_csv(input_csv)
 
     def parse_time_to_minutes(value):

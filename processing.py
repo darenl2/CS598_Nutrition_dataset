@@ -11,7 +11,6 @@ from processing_scripts import cuisine_type as cuisine_type_mod
 
 
 def add_course_from_cuisine_path(df: pd.DataFrame, path_col: str = "cuisine_path") -> pd.DataFrame:
-    """Derive top_level_cuisine and a simple course label using cuisines.py utilities."""
     col = path_col if path_col in df.columns else next((c for c in df.columns if "cuisine" in c.lower()), None)
 
     def top_level(x: str):
@@ -41,7 +40,6 @@ def add_course_from_cuisine_path(df: pd.DataFrame, path_col: str = "cuisine_path
 
 
 def add_dietary_flags(df: pd.DataFrame, in_csv_path: str) -> pd.DataFrame:
-    """Use your dietary_labels.py which returns a DF of booleans from a CSV path; align and merge."""
     flags = dietary_mod.categorize_dietary_labels(in_csv_path)
     flags = flags.reset_index(drop=True)
     df = df.reset_index(drop=True)
@@ -50,10 +48,8 @@ def add_dietary_flags(df: pd.DataFrame, in_csv_path: str) -> pd.DataFrame:
 
 def add_difficulty_simple(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Keep difficulty identical to your simple version:
-      score = total_time * number_of_directions
-      buckets: <200 easy, <600 medium, else hard
-    We don't call a CLI; we inline the same logic so the orchestrator stays file-in/file-out.
+    score = total_time * number_of_directions
+    buckets: <200 easy, <600 medium, else hard
     """
     time_col = next((c for c in df.columns if c.lower() in ["total_time", "total time"]), None)
     dir_col = next((c for c in df.columns if any(k in c.lower() for k in ["direction","instruction","step"])), None)
@@ -101,7 +97,6 @@ def add_difficulty_simple(df: pd.DataFrame) -> pd.DataFrame:
         df["difficulty"] = df["difficulty_score"].apply(bucket) if isinstance(score, pd.Series) else "N/A"
     return df
 
-# ---------- main ----------
 
 def main():
     if len(sys.argv) != 3:

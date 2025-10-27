@@ -2,7 +2,7 @@ import pandas as pd
 
 def categorize_dietary_labels(csv_path: str):
     """
-    Reads a recipe CSV and creates a single column 'dietary_restrictions'
+    Creates a single column 'dietary_restrictions'
     listing all applicable dietary labels (e.g. 'Vegetarian, Nut-Free').
     """
     df = pd.read_csv(csv_path)

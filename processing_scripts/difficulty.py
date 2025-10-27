@@ -2,9 +2,6 @@ import ast
 import pandas as pd
 
 def _count_steps(val) -> int:
-    """
-    The test csv from Kaggle gives us different data type for the ingredients column
-    """
     if val is None:
         return 0
     s = str(val).strip()
@@ -37,10 +34,8 @@ def _bucket(score: float) -> str:
 
 def add_difficulty(df: pd.DataFrame, *, time_col: str = "total_time", directions_col: str = "directions") -> pd.DataFrame:
     """
-    DataFrame → DataFrame. Adds:
-      - difficulty_score = total_time * number_of_directions
-      - difficulty ∈ {easy, medium, hard}
-    Does not write to disk.
+    - difficulty_score = total_time * number_of_directions
+    - difficulty ∈ {easy, medium, hard}
     """
     df = df.copy()
 
