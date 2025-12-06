@@ -7,7 +7,8 @@ from processing_scripts import category as categories_mod
 from processing_scripts import dietary_labels as dietary_mod
 from processing_scripts import difficulty as difficulty_mod
 from processing_scripts import data_cleaning as data_cleaning_mod
-from processing_scripts import cuisine_type as cuisine_type_mod  
+from processing_scripts import cuisine_type as cuisine_type_mod
+from processing_scripts import usda_integration as usda_mod   # <-- NEW IMPORT
 
 
 def add_course_from_cuisine_path(df: pd.DataFrame, path_col: str = "cuisine_path") -> pd.DataFrame:
@@ -52,7 +53,7 @@ def add_difficulty_simple(df: pd.DataFrame) -> pd.DataFrame:
     buckets: <200 easy, <600 medium, else hard
     """
     time_col = next((c for c in df.columns if c.lower() in ["total_time", "total time"]), None)
-    dir_col = next((c for c in df.columns if any(k in c.lower() for k in ["direction","instruction","step"])), None)
+    dir_col = next((c for c in df.columns if any(k in c.lower() for k in ["direction", "instruction", "step"])), None)
 
     def count_steps(val):
         if val is None:
@@ -104,27 +105,42 @@ def main():
         sys.exit(1)
 
     in_csv, out_csv = sys.argv[1], sys.argv[2]
-    
+
     temp_df = pd.read_csv(in_csv, nrows=1)
-    
+
     prep_col = "prep_time" if "prep_time" in temp_df.columns else ("Prep Time" if "Prep Time" in temp_df.columns else None)
     cook_col = "cook_time" if "cook_time" in temp_df.columns else ("Cook Time" if "Cook Time" in temp_df.columns else None)
     total_col = "total_time" if "total_time" in temp_df.columns else ("Total Time" if "Total Time" in temp_df.columns else None)
-    
-    df = data_cleaning_mod.standardize_time_columns_df(in_csv, prep_col=prep_col, cook_col=cook_col, total_col=total_col)
+
+    df = data_cleaning_mod.standardize_time_columns_df(
+        in_csv,
+        prep_col=prep_col,
+        cook_col=cook_col,
+        total_col=total_col
+    )
 
     df = add_course_from_cuisine_path(df)
     df = cuisine_type_mod.add_cuisine_type(df)
     df = add_dietary_flags(df, in_csv)
     df = add_difficulty_simple(df)
-    
-    # Check if total_time column exists - if not, set both difficulty and cuisine_type to "N/A"
+
+    # If total_time missing
     if total_col is None:
         df["difficulty"] = "N/A"
         df["cuisine_type"] = "N/A"
 
+    # -----------------------------
+    # NEW USDA CALORIE ENRICHMENT
+    # -----------------------------
+    df = usda_mod.add_usda_calories(
+        df,
+        ingredients_col="ingredients",  # change if needed
+        max_rows=200                    # limit to first 200 rows to conserve API calls
+    )
+
     df.to_csv(out_csv, index=False, mode='w')
     print(f"✅ cleaned dataset written: {out_csv}")
+
 
 if __name__ == "__main__":
     main()
