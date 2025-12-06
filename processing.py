@@ -129,13 +129,10 @@ def main():
         df["difficulty"] = "N/A"
         df["cuisine_type"] = "N/A"
 
-    # -----------------------------
-    # NEW USDA CALORIE ENRICHMENT
-    # -----------------------------
     df = usda_mod.add_usda_calories(
         df,
-        ingredients_col="ingredients",  # change if needed
-        max_rows=200                    # limit to first 200 rows to conserve API calls
+        ingredients_col="ingredients",
+        max_rows=2000             
     )
 
     df.to_csv(out_csv, index=False, mode='w')

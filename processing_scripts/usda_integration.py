@@ -9,7 +9,6 @@ import pandas as pd
 import requests
 
 
-# Put your USDA FoodData Central API key here directly
 USDA_API_KEY = "WAhcbpuNqcWedcRtDpbTTfrXwEiHTrDVxnAA3u8g"
 
 BASE_URL = "https://api.nal.usda.gov/fdc/v1"
@@ -35,8 +34,8 @@ def clean_ingredient(raw: str) -> str:
 
     ing = raw.lower()
 
-    ing = re.sub(r"\([^)]*\)", "", ing)  # remove parentheses
-    ing = re.sub(r"\d+\/\d+|\d+", "", ing)  # remove numbers
+    ing = re.sub(r"\([^)]*\)", "", ing)
+    ing = re.sub(r"\d+\/\d+|\d+", "", ing)
 
     units = [
         "cup", "cups", "tbsp", "tablespoon", "tsp", "teaspoon",
@@ -66,7 +65,6 @@ def parse_ingredients_field(value):
     - String representing a list of dicts
     - String of comma/semicolon separated ingredients
     """
-    # Case 1: Already a Python list (most ideal)
     if isinstance(value, list):
         cleaned = []
         for item in value:
@@ -76,11 +74,9 @@ def parse_ingredients_field(value):
                 cleaned.append(str(item))
         return cleaned
 
-    # Case 2: String that *looks* like a list
     if isinstance(value, str):
         s = value.strip()
 
-        # Try to parse as Python literal
         if s.startswith("[") and s.endswith("]"):
             try:
                 parsed = ast.literal_eval(s)
@@ -95,7 +91,6 @@ def parse_ingredients_field(value):
             except Exception:
                 pass
 
-        # Fallback: naive splitting
         return [p.strip() for p in re.split(r"[;,]", s) if p.strip()]
 
     return []

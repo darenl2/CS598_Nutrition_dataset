@@ -16,8 +16,10 @@ CS598_Nutrition_dataset/
 │   ├── cuisine_type.py      # Cuisine type detection (Italian, Chinese, etc.)
 │   ├── data_cleaning.py     # Time standardization (convert to minutes)
 │   ├── dietary_labels.py    # Dietary restriction detection (vegetarian, vegan, etc.)
-│   └── difficulty.py        # Recipe difficulty calculation
-└── processing.py            # Main orchestration script
+│   ├── difficulty.py        # Recipe difficulty calculation
+│   └── usda_integration.py  # USDA API integration for calorie calculation
+├── processing.py            # Main orchestration script
+└── usda_cache.json          # Cache file for USDA API responses
 ```
 
 ## Features
@@ -49,6 +51,15 @@ CS598_Nutrition_dataset/
   - Hard: ≥ 600
   - N/A: if score is 0 or total_time column is missing
 
+### USDA Calorie Integration (`usda_integration.py`)
+- Integrates with USDA FoodData Central API to calculate recipe calories
+- Parses and cleans ingredient names from various formats
+- Queries USDA API for calorie information per ingredient
+- Uses caching (`usda_cache.json`) to avoid redundant API calls
+- Processes up to 3 ingredients per recipe (configurable)
+- Adds `total_calories_usda` column with sum of calories from top ingredients
+- Limited to first 2000 rows by default (configurable via `max_rows` parameter)
+
 ## Usage
 
 ### Basic Usage
@@ -70,6 +81,7 @@ python processing.py input_data/test_recipes.csv output_data/cleaned_test_recipe
 3. **Cuisine Detection**: Adds `cuisine_type` column
 4. **Dietary Analysis**: Adds `dietary_restrictions` column
 5. **Difficulty Calculation**: Adds `difficulty_score` and `difficulty` columns
+6. **USDA Calorie Integration**: Adds `total_calories_usda` column with calorie estimates
 
 ## Output Columns
 
@@ -81,15 +93,20 @@ The processed CSV includes:
 - `dietary_restrictions`: Detected dietary labels or "None"
 - `difficulty_score`: Calculated difficulty score
 - `difficulty`: Difficulty level (easy, medium, hard, or "N/A")
+- `total_calories_usda`: Estimated total calories from top 3 ingredients (via USDA API) or `None`
 
 ## Requirements
 
 - Python 3.x
 - pandas
 - numpy
+- requests (for USDA API integration)
 
 ## Notes
 
 - Missing or invalid data defaults to "N/A" for relevant fields
 - Processing automatically overwrites output files
 - All time values are standardized to minutes (integers)
+- USDA API integration requires internet connection and uses a cached API key
+- USDA calorie calculation processes first 2000 rows by default to manage API rate limits
+- Cache file (`usda_cache.json`) stores API responses to minimize redundant requests
