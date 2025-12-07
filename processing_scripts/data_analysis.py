@@ -177,12 +177,13 @@ def analyze_by_dietary_restriction(file_path):
 
             calorie_analysis = {
                 "min_calories": min_cal,
+                "median_calories": median_cal,
+                "mean_calories": calories.mean(), # Added mean here
+                "max_calories": max_cal,
                 "min_calorie_recipe_name": min_cal_row['recipe_name'] if 'recipe_name' in df.columns else "N/A",
                 "min_calorie_row_index": int(min_cal_row.name),
-                "median_calories": median_cal,
                 "median_calorie_recipe_name": median_cal_row['recipe_name'] if 'recipe_name' in df.columns else "N/A",
                 "median_calorie_row_index": int(median_cal_row.name),
-                "max_calories": max_cal,
                 "max_calorie_recipe_name": max_cal_row['recipe_name'] if 'recipe_name' in df.columns else "N/A",
                 "max_calorie_row_index": int(max_cal_row.name),
             }
@@ -203,12 +204,13 @@ def analyze_by_dietary_restriction(file_path):
 
             difficulty_analysis = {
                 "min_difficulty_score": min_score,
+                "median_difficulty_score": median_score,
+                "mean_difficulty_score": scores.mean(), # Added mean here
+                "max_difficulty_score": max_score,
                 "min_difficulty_recipe_name": min_score_row['recipe_name'] if 'recipe_name' in df.columns else "N/A",
                 "min_difficulty_row_index": int(min_score_row.name),
-                "median_difficulty_score": median_score,
                 "median_difficulty_recipe_name": median_score_row['recipe_name'] if 'recipe_name' in df.columns else "N/A",
                 "median_difficulty_row_index": int(median_score_row.name),
-                "max_difficulty_score": max_score,
                 "max_difficulty_recipe_name": max_score_row['recipe_name'] if 'recipe_name' in df.columns else "N/A",
                 "max_difficulty_row_index": int(max_score_row.name),
             }
